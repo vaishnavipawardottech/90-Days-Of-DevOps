@@ -6,7 +6,7 @@ Understand the Linux file system hierarchy and practice troubleshooting common r
 
 ---
 
-# Part 1: Linux File System Hierarchy (30 minutes)
+# Part 1: Linux File System Hierarchy
 
 ## Linux File System Hierarchy
 
@@ -193,139 +193,87 @@ This displays all files, including hidden files, in my home directory.
 
 # Part 2: Scenario-Based Practice (40 minutes)
 
-**Important:** Focus on understanding the **troubleshooting flow**, not memorizing commands. Use the hints!
 
 ---
 
-## SOLVED EXAMPLE: Understanding How to Approach Scenarios
-
-**Example Scenario: Check if a Service is Running**
-
-```text
-Question: How do you check if the 'nginx' service is running?
-```
-
-**My Solution (Step by step):**
-
-**Step 1:** Check service status
-
-```bash
-systemctl status nginx
-```
-
-**Why this command?** It shows whether the service is active, failed, or stopped.
-
-**Step 2:** If the service is not found, list all services
-
-```bash
-systemctl list-units --type=service
-```
-
-**Why this command?** It helps identify what services exist and are currently loaded on the system.
-
-**Step 3:** Check if the service is enabled on boot
-
-```bash
-systemctl is-enabled nginx
-```
-
-**Why this command?** It tells whether nginx is configured to start automatically after a reboot.
-
-**What I learned:** Always check the service status first, then investigate based on what you see.
-
----
-
-# Now Try These Scenarios Yourself
-
----
-
-## Scenario 1: Service Not Starting
+# Scenario 1: Service Not Starting
 
 ```text
 Question: A web application service called 'myapp' failed to start after a server reboot.
 What commands would you run to diagnose the issue?
-
-For practice, I used the 'nginx' service because it is a real
-systemd-managed service that can be started, stopped, and investigated.
-```
-
-**Hint:**
-
-- First check: Is the service running or failed?
-- Then check: What do the logs say?
-- Finally check: Is it enabled to start on boot?
-
-**Commands to explore:**
-
-```bash
-systemctl status nginx
-journalctl -u nginx -n 50
-systemctl is-enabled nginx
-sudo systemctl start nginx
 ```
 
 **My Solution (Step by step):**
 
-**Step 1:** Check whether nginx is installed
+**Step 1:** Check the current status of the service
 
 ```bash
-nginx -v
+systemctl status myapp
 ```
 
-**Why this command?** It confirms whether nginx is installed on the system.
+**Why this command?** It shows whether `myapp` is running, stopped, or failed and may provide an initial error message.
 
-If nginx is not installed:
+**Step 2:** Check the recent logs of the service
 
 ```bash
-sudo apt update
-sudo apt install nginx
+journalctl -u myapp -n 50
 ```
 
-**Step 2:** Check the service status
+**Why this command?** It displays the latest 50 log entries for `myapp`, which can help identify why the service failed to start.
+
+**Step 3:** Check logs from the current boot
 
 ```bash
-systemctl status nginx
+journalctl -u myapp -b
 ```
 
-**Why this command?** It shows whether nginx is running, stopped, or failed and can provide initial error information.
+**Why this command?** It shows the `myapp` service logs from the current boot, which is useful when the problem occurred after a server restart.
 
-**Step 3:** Check the service logs
+**Step 4:** Check whether the service is enabled on boot
 
 ```bash
-journalctl -u nginx -n 50
+systemctl is-enabled myapp
 ```
 
-**Why this command?** It displays the latest 50 log entries for nginx and helps identify the reason for a service failure.
+**Why this command?** It verifies whether `myapp` is configured to start automatically when the server boots.
 
-**Step 4:** Check whether nginx is enabled on boot
+**Step 5:** Check the service configuration
 
 ```bash
-systemctl is-enabled nginx
+systemctl cat myapp
 ```
 
-**Why this command?** It tells whether nginx is configured to start automatically when the system boots.
+**Why this command?** It displays the systemd unit configuration for `myapp`, including the command used to start the application and other service settings.
 
-**Step 5:** Start nginx if it is stopped
+**Step 6:** Try starting the service manually
 
 ```bash
-sudo systemctl start nginx
+sudo systemctl start myapp
 ```
 
-**Why this command?** It starts the nginx service if it is currently stopped.
+**Why this command?** It attempts to start `myapp` and helps determine whether the service can start successfully.
 
-**Step 6:** Verify the service status
+**Step 7:** Verify the service status again
 
 ```bash
-systemctl status nginx
+systemctl status myapp
 ```
 
-**Why this command?** It confirms whether nginx started successfully after applying the fix.
+**Why this command?** It confirms whether the service started successfully or is still failing.
 
-**What I learned:** For a service problem, I should first check the status, then inspect the logs, check whether it is enabled on boot, start the service if required, and finally verify the result.
+**Step 8:** Enable the service if it is not enabled
+
+```bash
+sudo systemctl enable myapp
+```
+
+**Why this command?** It configures `myapp` to start automatically during future system boots.
+
+**What I learned:** When a service fails after a reboot, I should first check its status, inspect its logs, verify its configuration and boot settings, attempt to start it, and finally verify the result.
 
 ---
 
-## Scenario 2: High CPU Usage
+# Scenario 2: High CPU Usage
 
 ```text
 Question: Your manager reports that the application server is slow.
@@ -333,28 +281,15 @@ You SSH into the server. What commands would you run to identify
 which process is using high CPU?
 ```
 
-**Hint:**
-
-- Use a command that shows **live** CPU usage.
-- Look for processes sorted by CPU percentage.
-- Note the PID (Process ID) of the top process.
-
-**Commands to explore:**
-
-```bash
-top
-ps aux --sort=-%cpu | head -10
-```
-
 **My Solution (Step by step):**
 
-**Step 1:** Monitor CPU usage in real time
+**Step 1:** Check CPU and process usage in real time
 
 ```bash
 top
 ```
 
-**Why this command?** `top` provides a live view of running processes and their CPU and memory usage.
+**Why this command?** It provides a real-time view of system resource usage and running processes, allowing me to identify processes consuming high CPU.
 
 Press `q` to exit.
 
@@ -364,20 +299,15 @@ Press `q` to exit.
 ps aux --sort=-%cpu | head -10
 ```
 
-**Why this command?** It sorts running processes by CPU usage and displays the processes consuming the most CPU.
+**Why this command?** It sorts processes by CPU utilization and displays the processes consuming the most CPU.
 
-**Step 3:** Identify the process ID
+**Step 3:** Identify the PID of the high-CPU process
 
-Look at the `PID` and `%CPU` columns.
-
-Example:
-
-```text
-USER       PID   %CPU   %MEM   COMMAND
-ubuntu   12345   98.5    0.1   example-process
+```bash
+ps aux --sort=-%cpu | head -10
 ```
 
-**Why this command?** The PID identifies the specific process that is consuming high CPU.
+**Why this command?** The `PID` column identifies the process consuming high CPU, which can then be investigated further.
 
 **Step 4:** Get detailed information about the process
 
@@ -385,104 +315,99 @@ ubuntu   12345   98.5    0.1   example-process
 ps -p <PID> -f
 ```
 
-**Why this command?** It provides detailed information about the process identified by its PID.
+**Why this command?** It displays detailed information about the process associated with the identified PID.
 
 Replace `<PID>` with the actual process ID.
 
-**Step 5:** Create CPU load for practice
-
-Open another terminal and run:
+**Step 5:** Identify the executable associated with the process
 
 ```bash
-yes > /dev/null
+readlink -f /proc/<PID>/exe
 ```
 
-Then, in the first terminal, run:
+**Why this command?** It identifies the executable associated with the process and helps determine which application or service is responsible for the high CPU usage.
+
+Replace `<PID>` with the actual process ID.
+
+**Step 6:** Monitor the specific process
 
 ```bash
-ps aux --sort=-%cpu | head -10
+top -p <PID>
 ```
 
-**Why this command?** It allows me to see the `yes` process consuming CPU and practice identifying a high CPU process.
+**Why this command?** It allows me to monitor the CPU and memory usage of the specific process in real time.
 
-Find the PID of the `yes` process.
+Replace `<PID>` with the actual process ID.
 
-Go back to the terminal running `yes` and press:
-
-```text
-Ctrl + C
-```
-
-**What I learned:** When a server is slow, I should check CPU usage, identify the process consuming the most CPU, note its PID, and investigate that process further.
+**What I learned:** When an application server is slow, I should first check overall CPU usage, identify the process consuming the most CPU, find its PID, and investigate that specific process further.
 
 ---
 
-## Scenario 3: Finding Service Logs
+# Scenario 3: Finding Service Logs
 
 ```text
 Question: A developer asks: "Where are the logs for the 'docker' service?"
-The service is managed by systemd. What commands would you use?
-
-For practice, I used the 'nginx' service because it is available
-as a systemd-managed service on my Linux machine.
-```
-
-**Hint:**
-
-- systemd services → logs are in journald.
-- Command pattern: `journalctl -u <service-name>`.
-- Use `-n` to limit the number of lines.
-- Use `-f` to follow logs in real time.
-
-**Commands to explore:**
-
-```bash
-systemctl status nginx
-journalctl -u nginx -n 50
-journalctl -u nginx -f
+The service is managed by systemd.
+What commands would you use?
 ```
 
 **My Solution (Step by step):**
 
-**Step 1:** Check the service status
+**Step 1:** Check the status of the Docker service
 
 ```bash
-systemctl status nginx
+systemctl status docker
 ```
 
-**Why this command?** It confirms that the service exists and shows its current state.
+**Why this command?** It confirms whether the Docker service exists and shows its current status along with recent log information.
 
-**Step 2:** View the last 50 lines of logs
+**Step 2:** View the last 50 lines of Docker logs
 
 ```bash
-journalctl -u nginx -n 50
+journalctl -u docker -n 50
 ```
 
-**Why this command?** It displays the latest 50 log entries generated by the nginx service.
+**Why this command?** It displays the most recent 50 log entries generated by the Docker service.
 
-**Step 3:** View logs from the last hour
+**Step 3:** View Docker logs from the current boot
 
 ```bash
-journalctl -u nginx --since "1 hour ago"
+journalctl -u docker -b
 ```
 
-**Why this command?** It helps narrow down logs to a specific time period, which is useful when investigating when an issue occurred.
+**Why this command?** It displays Docker service logs generated during the current system boot, which is useful when investigating startup or reboot-related issues.
 
-**Step 4:** Follow logs in real time
+**Step 4:** View Docker logs from a specific time period
 
 ```bash
-journalctl -u nginx -f
+journalctl -u docker --since "1 hour ago"
 ```
 
-**Why this command?** The `-f` option continuously displays new log entries as they are generated, similar to `tail -f`.
+**Why this command?** It limits the output to recent logs and makes it easier to investigate an issue that occurred within a specific time period.
+
+**Step 5:** Follow Docker logs in real time
+
+```bash
+journalctl -u docker -f
+```
+
+**Why this command?** The `-f` option continuously displays new log entries as they are generated, allowing me to monitor the service in real time.
 
 Press `Ctrl + C` to stop following the logs.
 
-**What I learned:** For systemd-managed services, `journalctl -u <service>` is useful for finding service-specific logs. I can use `-n` for recent entries and `-f` to monitor logs in real time.
+**Step 6:** View Docker error messages
+
+```bash
+journalctl -u docker -p err
+```
+
+**Why this command?** It filters the Docker service logs to show error-level and more severe messages, making it easier to identify failures.
+
+**What I learned:** For a systemd-managed service, `journalctl -u <service-name>` is the main command for viewing its logs. Options such as `-n`, `-b`, `--since`, `-f`, and `-p` can be used to narrow down and monitor the logs.
 
 ---
 
-## Scenario 4: File Permissions Issue
+# Scenario 4: File Permissions Issue
 
 ```text
 Question: A script at /home/user/backup.sh is not executing.
@@ -490,107 +415,74 @@ When you run it: ./backup.sh
 You get: "Permission denied"
 
 What commands would you use to fix this?
-
-For practice, I created a backup.sh script in my home directory.
 ```
-
-**Hint:**
-
-- First: Check what permissions the file has.
-- Understand: Files need `x` (execute) permission to run.
-- Fix: Add execute permission with `chmod`.
 
 **My Solution (Step by step):**
 
-**Step 1:** Create a practice directory
+**Step 1:** Check the current permissions of the script
 
 ```bash
-mkdir -p ~/permission-practice
-cd ~/permission-practice
+ls -l /home/user/backup.sh
 ```
 
-**Why this command?** It creates a separate directory for practicing file permissions without modifying important system files.
+**Why this command?** It displays the file permissions, owner, and group. I need to check whether the file has the `x` execute permission.
 
-**Step 2:** Create the script
-
-```bash
-echo '#!/bin/bash' > backup.sh
-echo 'echo "Backup completed successfully."' >> backup.sh
-```
-
-**Why this command?** It creates a simple shell script that can be used to practice execute permissions.
-
-**Step 3:** Check the current permissions
-
-```bash
-ls -l backup.sh
-```
-
-Example:
+For example:
 
 ```text
--rw-r--r-- backup.sh
+-rw-r--r-- 1 user user 120 Aug 13 10:00 backup.sh
 ```
 
-**Why this command?** It allows me to check whether the file has execute permission. The `x` permission is missing in this example.
+Here, there is no `x` permission, so the script cannot be executed directly.
 
-**Step 4:** Try to execute the script
+**Step 2:** Add execute permission
 
 ```bash
-./backup.sh
+chmod +x /home/user/backup.sh
 ```
 
-Expected result:
+**Why this command?** It adds execute permission to the script so that it can be run as an executable file.
+
+**Step 3:** Verify the updated permissions
+
+```bash
+ls -l /home/user/backup.sh
+```
+
+**Why this command?** It confirms that the execute permission has been added.
+
+For example:
 
 ```text
-Permission denied
+-rwxr-xr-x 1 user user 120 Aug 13 10:00 backup.sh
 ```
 
-**Why this command?** It reproduces the permission problem from the scenario.
+The `x` indicates that the file is now executable.
 
-**Step 5:** Add execute permission
+**Step 4:** Run the script
 
 ```bash
-chmod +x backup.sh
-```
-
-**Why this command?** It adds execute permission to the script so it can be executed.
-
-**Step 6:** Verify the permission
-
-```bash
-ls -l backup.sh
-```
-
-Example:
-
-```text
--rwxr-xr-x backup.sh
-```
-
-**Why this command?** It confirms that the `x` execute permission has been added.
-
-**Step 7:** Run the script again
-
-```bash
-./backup.sh
-```
-
-Expected output:
-
-```text
-Backup completed successfully.
+/home/user/backup.sh
 ```
 
 **Why this command?** It verifies that the permission issue has been resolved and the script can now execute.
 
-**What I learned:** When I get a `Permission denied` error while running a script, I should first check the file permissions with `ls -l`, add execute permission using `chmod +x` if required, verify the permission, and then run the script again.
+**Step 5:** Run the script from its directory
+
+```bash
+cd /home/user
+./backup.sh
+```
+
+**Why this command?** `./backup.sh` explicitly tells Linux to execute the `backup.sh` file from the current directory.
+
+**What I learned:** When a script returns `Permission denied`, I should check its permissions using `ls -l`, verify whether the execute permission is missing, add it using `chmod +x`, verify the change, and then run the script again.
 
 ---
 
 # Troubleshooting Flow
 
-The main troubleshooting approach I learned today is:
+The main troubleshooting approach I learned from these scenarios is:
 
 ```text
 Identify the problem
@@ -610,49 +502,9 @@ Verify the result
 
 # Why This Matters in DevOps
 
-- **File System Understanding:** Knowing where configurations, logs, binaries, user files, and temporary files are stored makes Linux troubleshooting faster.
-- **Log Troubleshooting:** `/var/log` and `journalctl` are important sources of information when diagnosing application and service failures.
-- **Service Management:** `systemctl` helps DevOps engineers check, start, stop, and troubleshoot services.
-- **Performance Troubleshooting:** `top` and `ps` help identify processes consuming excessive CPU resources.
-- **Permission Troubleshooting:** Understanding Linux permissions and `chmod` helps resolve common script and deployment issues.
-- **Production Incidents:** These troubleshooting patterns are useful when investigating service failures, performance problems, log issues, and deployment errors.
-- **Automation:** Understanding Linux paths and permissions helps when writing reliable shell scripts and deployment automation.
-
----
-
-# Summary
-
-Today I learned the Linux file system hierarchy and practiced working with important directories such as `/etc`, `/var/log`, `/home`, `/tmp`, `/usr/bin`, and `/opt`.
-
-I also practiced troubleshooting service failures, identifying high CPU processes, finding systemd service logs, and fixing file permission issues.
-
-The most important concept I learned is to follow a structured troubleshooting process instead of randomly trying commands.
-
-```text
-Identify → Investigate → Fix → Verify
-```
-
----
-
-## Submission
-
-1. Navigate to the `day-07/` folder in the repository.
-2. Add the `day-07-linux-fs-and-scenarios.md` file.
-3. Commit the changes.
-4. Push the changes to GitHub.
-
-## Learn in Public
-
-Share your Day 07 progress on LinkedIn:
-
-- Post 2–3 lines about what you learned about the Linux file system.
-- Share one troubleshooting scenario you found challenging and how you solved it.
-- Optionally share a screenshot of your notes or terminal practice.
-
-Use hashtags:
-
-```text
-#90DaysOfDevOps
-#DevOpsKaJosh
-#TrainWithShubham
-```
+- **Service Troubleshooting:** `systemctl` and `journalctl` help diagnose services that fail to start or stop unexpectedly.
+- **Log Analysis:** Service logs provide important information about errors and failures during production incidents.
+- **Performance Troubleshooting:** Commands such as `top` and `ps` help identify processes consuming excessive CPU resources.
+- **Permission Management:** Understanding Linux permissions helps resolve script execution and deployment problems.
+- **Structured Troubleshooting:** Following a consistent flow of checking, investigating, fixing, and verifying helps reduce troubleshooting time during incidents.
+- **Production Support:** These commands and troubleshooting patterns are useful when investigating real application and server issues.
