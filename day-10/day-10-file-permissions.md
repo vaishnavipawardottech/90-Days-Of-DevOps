@@ -13,46 +13,6 @@ The following files and directory were created:
 * `script.sh` – Shell script created using `vim`
 * `project/` – Directory created for permission practice
 
-## File Operations
-
-### Creating Files
-
-```bash
-touch devops.txt
-cat > notes.txt
-vim script.sh
-```
-
-### Reading Files
-
-```bash
-cat notes.txt
-vim -R script.sh
-head -n 5 /etc/passwd
-tail -n 5 /etc/passwd
-```
-
-## Permissions
-
-Linux permissions are represented using:
-
-```text
-rwxrwxrwx
-```
-
-They are divided into:
-
-```text
-Owner | Group | Others
-```
-
-Permission values:
-
-| Permission    | Value |
-| ------------- | ----- |
-| Read (`r`)    | 4     |
-| Write (`w`)   | 2     |
-| Execute (`x`) | 1     |
 
 ## Permission Changes
 
@@ -200,13 +160,6 @@ Expected permission settings:
 
 ## Commands Used
 
-### Directory Setup
-
-```bash
-mkdir -p ~/devops-day10
-cd ~/devops-day10
-```
-
 ### File Creation
 
 ```bash
@@ -285,13 +238,5 @@ ls -ld project
 2. `chmod` can be used to add, remove, or set specific permissions using symbolic or numeric notation.
 3. Execute permission is required to run a script, while write permission is required to modify a file.
 
-## Verification
-
-The final permissions were verified using:
-
-```bash
-ls -l
-ls -ld project
-```
 
 Day 10 successfully completed: **File Permissions & File Operations Challenge**.
