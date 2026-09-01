@@ -1,116 +1,133 @@
-# Day 27 – GitHub Profile Makeover: Build Your Developer Identity
+# Day 28 – Revision Day: Everything from Day 1 to Day 27
 
 ## Task
 
-Your GitHub profile is your **developer resume**. Recruiters, hiring managers, and open-source maintainers will look at your GitHub before your LinkedIn. Today, you'll clean up your profile, organize your repositories, and create a profile README that tells your story.
+You've covered a lot of ground in 27 days — DevOps fundamentals, Linux deep dives, Shell scripting, Python basics, Git & GitHub, and even your developer branding. Today, **stop and revise**. No new concepts. Just solidify what you've learned.
 
-This is not a coding day — it's a **branding day**. Treat it seriously.
+The goal is to identify gaps, revisit topics you struggled with, and make sure you can confidently explain and use everything covered so far.
 
 ---
 
-## Expected Output
-- A polished GitHub profile with a profile README
-- Well-organized repositories with proper names, descriptions, and READMEs
-- A markdown file: `day-27-notes.md` documenting what you changed and why
+## What You've Covered So Far
+
+| Days | Topic | Key Concepts |
+|------|-------|-------------|
+| 1 | DevOps & Cloud Intro | What is DevOps, SDLC, Cloud basics |
+| 2–7 | Linux Fundamentals | Architecture, commands, processes, systemd, file system hierarchy, troubleshooting, text files |
+| 8 | Cloud Server Setup | Docker, Nginx, web deployment |
+| 9–11 | Users, Permissions & Ownership | User/group management, file permissions, chown/chgrp |
+| 12 | Revision Day 1 | Days 1–11 recap |
+| 13 | Volume Management | LVM — physical volumes, volume groups, logical volumes |
+| 14–15 | Networking | Fundamentals, DNS, IP, subnets, ports, hands-on checks |
+| 16–18 | Shell Scripting | Basics, loops, arguments, error handling, functions |
+| 19–20 | Shell Scripting Projects | Log rotation, backup, crontab, log analyzer |
+| 21 | Shell Scripting Cheat Sheet | Personal reference guide |
+| 22–25 | Git & GitHub | Init, branching, merge, rebase, stash, cherry pick, reset, revert, branching strategies |
+| 26 | GitHub CLI | Managing GitHub from the terminal |
+| 27 | GitHub Profile | Profile README, repo organization, developer branding |
 
 ---
 
 ## Challenge Tasks
 
-### Task 1: Audit Your Current GitHub Profile
-Before making changes, assess where you stand:
-1. Visit your own GitHub profile as if you were a stranger — what impression does it give?
-2. Answer in your notes:
-   - Is your profile picture professional?
-   - Is your bio filled in? Does it say what you do?
-   - Are your pinned repos relevant, or are they random forks?
-   - Do your repos have descriptions, or are they blank?
-   - Would a recruiter understand what you've been working on?
+### Task 1: Self-Assessment Checklist
+Go through the checklist below. For each item, mark yourself honestly:
+- **Can do confidently**
+- **Need to revisit**
+- **Haven't done yet**
+
+#### Linux
+- [ ] Navigate the file system, create/move/delete files and directories
+- [ ] Manage processes — list, kill, background/foreground
+- [ ] Work with systemd — start, stop, enable, check status of services
+- [ ] Read and edit text files using vi/vim or nano
+- [ ] Troubleshoot CPU, memory, and disk issues using top, free, df, du
+- [ ] Explain the Linux file system hierarchy (/, /etc, /var, /home, /tmp, etc.)
+- [ ] Create users and groups, manage passwords
+- [ ] Set file permissions using chmod (numeric and symbolic)
+- [ ] Change file ownership with chown and chgrp
+- [ ] Create and manage LVM volumes
+- [ ] Check network connectivity — ping, curl, netstat, ss, dig, nslookup
+- [ ] Explain DNS resolution, IP addressing, subnets, and common ports
+
+#### Shell Scripting
+- [ ] Write a script with variables, arguments, and user input
+- [ ] Use if/elif/else and case statements
+- [ ] Write for, while, and until loops
+- [ ] Define and call functions with arguments and return values
+- [ ] Use grep, awk, sed, sort, uniq for text processing
+- [ ] Handle errors with set -e, set -u, set -o pipefail, trap
+- [ ] Schedule scripts with crontab
+
+#### Git & GitHub
+- [ ] Initialize a repo, stage, commit, and view history
+- [ ] Create and switch branches
+- [ ] Push to and pull from GitHub
+- [ ] Explain clone vs fork
+- [ ] Merge branches — understand fast-forward vs merge commit
+- [ ] Rebase a branch and explain when to use it vs merge
+- [ ] Use git stash and git stash pop
+- [ ] Cherry-pick a commit from another branch
+- [ ] Explain squash merge vs regular merge
+- [ ] Use git reset (soft, mixed, hard) and git revert
+- [ ] Explain GitFlow, GitHub Flow, and Trunk-Based Development
+- [ ] Use GitHub CLI to create repos, PRs, and issues
 
 ---
 
-### Task 2: Create Your Profile README
-1. Create a **special repository** with the same name as your GitHub username (e.g., `github.com/yourname/yourname`)
-2. Add a `README.md` — this will appear on your profile page
-3. Include the following in your profile README:
-   - A short introduction — who you are, what you're learning
-   - What you're currently working on (e.g., 90 Days of DevOps)
-   - Skills/tools you know or are learning (Linux, Git, Python, Shell, etc.)
-   - Links to your important repos
-   - How to reach you (LinkedIn, Twitter, email — whatever you're comfortable sharing)
-4. Keep it clean and simple — don't overload it with badges and widgets
+### Task 2: Revisit Your Weak Spots
+1. Pick **3 topics** from the checklist where you marked "Need to revisit"
+2. Go back to that day's challenge and redo the hands-on tasks
+3. Document what you re-learned in `day-28-notes.md`
 
 ---
 
-### Task 3: Organize Your Repositories
-Create and organize the following repos (if you don't have them already):
+### Task 3: Quick-Fire Questions
+Answer these from memory (no Googling). Then verify your answers:
 
-1. **90 Days of DevOps** — your fork or personal repo with all daily submissions
-   - Clear README explaining what the challenge is
-   - Organized folder structure by day
-
-2. **Shell Scripts** — a dedicated repo for all your shell scripting work
-   - Move/copy your scripts from Days 16–21 here
-   - Add a README listing what each script does
-
-3. **Python Scripts** — a dedicated repo for your Python projects
-   - Move/copy your scripts from Days 7–15 here
-   - Add a README listing what each script does
-
-4. **DevOps Notes** — a repo for your learning notes, cheat sheets, and references
-   - Add your shell scripting cheat sheet (Day 21)
-   - Add your git-commands.md
-   - Organize by topic (Linux, Git, Python, etc.)
-
-For **every repo**, make sure you have:
-- A clear, descriptive **repo name** (use hyphens, not spaces — e.g., `shell-scripts` not `Shell Scripts`)
-- A one-line **description** on GitHub
-- A proper **README.md** explaining what's inside
-- A relevant `.gitignore`
+1. What does `chmod 755 script.sh` do?
+2. What is the difference between a process and a service?
+3. How do you find which process is using port 8080?
+4. What does `set -euo pipefail` do in a shell script?
+5. What is the difference between `git reset --hard` and `git revert`?
+6. What branching strategy would you recommend for a team of 5 developers shipping weekly?
+7. What does `git stash` do and when would you use it?
+8. How do you schedule a script to run every day at 3 AM?
+9. What is the difference between `git fetch` and `git pull`?
+10. What is LVM and why would you use it instead of regular partitions?
 
 ---
 
-### Task 4: Pin Your Best Repos
-1. Go to your GitHub profile and select **6 pinned repositories**
-2. Choose repos that best represent your work and learning
-3. Make sure each pinned repo has a description and README
+### Task 4: Organize Your Work
+1. Make sure all your daily submissions (day-1 through day-27) are committed and pushed
+2. Check that your `git-commands.md` is up to date
+3. Check that your shell scripting cheat sheet is complete
+4. Verify your GitHub profile and repos are clean (from Day 27)
 
 ---
 
-### Task 5: Clean Up
-1. Delete or archive repos that are empty, abandoned, or irrelevant
-2. Rename any repos with unclear names
-3. Make sure you're not exposing any secrets (`.env` files, API keys, passwords) in any repo — check your commit history too
+### Task 5: Teach It Back
+Pick **one topic** you've learned and write a short explanation (5-10 lines) as if you're teaching it to someone who has never heard of it. Add it to your `day-28-notes.md`.
 
----
+Examples:
+- Explain Git branching to a non-developer
+- Explain file permissions to a new Linux user
+- Explain what a crontab is and why sysadmins use it
 
-### Task 6: Before & After
-1. Take a screenshot of your GitHub profile **before** you started today
-2. Take a screenshot **after** all your changes
-3. Add both to your `day-27-notes.md`
-4. Write 3 things you improved and why
-
----
-
-## Tips for a Good Profile README
-- Keep it **short** — 15-20 lines max
-- Use headers and bullet points — don't write paragraphs
-- Show what you're **doing**, not just what you **know**
-- A few well-placed badges are fine, but don't turn it into a Christmas tree
-- Look at profiles you admire for inspiration — but make yours authentic
+Teaching is the best test of understanding.
 
 ---
 
 ## Submission
-1. Add your `day-27-notes.md` (with before/after screenshots) to `2026/day-27/`
-2. Share the link to your updated GitHub profile
-3. Push to your fork
+1. Add your `day-28-notes.md` to `2026/day-28/`
+2. Push to your fork
+3. Make sure all previous days are pushed and up to date
 
 ---
 
 ## Learn in Public
 
-Share your before & after GitHub profile screenshots on LinkedIn. Tag people who inspired your profile.
+Share your self-assessment results or your "teach it back" explanation on LinkedIn. Be honest about what you found easy and what you need to work on.
 
 `#90DaysOfDevOps` `#DevOpsKaJosh` `#TrainWithShubham`
 
