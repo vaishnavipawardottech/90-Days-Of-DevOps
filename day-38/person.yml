@@ -1,10 +1,16 @@
+# Key-pair
 name: Vaishnavi Pawar
 role: DevOps Engineer
 experience_years: 1
 learning: true
+
+# list
 tools:
   - Git
   - GitHub
   - Docker
   - Kubernetes
+
+# list
 hobbies: [Reading, Traveling, Cooking]
+
