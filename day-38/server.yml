@@ -9,3 +9,13 @@ database:
   credentials:
     username: admin
     password: secret123
+
+startup_script: |
+  echo "Starting application"
+  echo "Checking database"
+  echo "Application started"
+
+startup_message: >
+   This is a long message
+   written across multiple lines
+   but will be treated as a single line when parsed.
