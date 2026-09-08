@@ -1,7 +1,7 @@
 import yaml
 
-with open('server.yml', 'r') as file:
+with open('person.yml', 'r') as file:
     try:
         print(yaml.safe_load(file))
-    except yaml.YAMLERROR as exc:
+    except yaml.YAMLError as exc:
         print(exc)
