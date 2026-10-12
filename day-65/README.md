@@ -1,212 +1,248 @@
-# Day 64 -- Terraform State Management and Remote Backends
+# Day 65 -- Terraform Modules: Build Reusable Infrastructure
 
 ## Task
-The state file is the single most important thing in Terraform. It is the source of truth -- the map between your `.tf` files and what actually exists in the cloud. Lose it and Terraform forgets everything. Corrupt it and your next apply could destroy production.
+You have been writing everything in one big `main.tf` file. That works for learning, but in real teams you manage dozens of environments with hundreds of resources. Copy-pasting configs across projects is a recipe for disaster.
 
-Today you learn to manage state like a professional -- remote backends, locking, importing existing resources, and handling drift.
+Today you learn Terraform modules -- the way to package, reuse, and share infrastructure code. Think of modules as functions in programming. Write once, call many times.
 
 ---
 
 ## Expected Output
-- Terraform state migrated from local to S3 remote backend with DynamoDB locking
-- An existing AWS resource imported into Terraform state
-- State drift simulated and reconciled
-- A markdown file: `day-64-state-management.md`
+- A custom EC2 module you built from scratch
+- A custom security group module wired into the EC2 module
+- A VPC created using the official public registry module
+- A markdown file: `day-65-modules.md`
 
 ---
 
 ## Challenge Tasks
 
-### Task 1: Inspect Your Current State
-Use your Day 63 config (or create a small config with a VPC and EC2 instance). Apply it and then explore the state:
+### Task 1: Understand Module Structure
+A Terraform module is just a directory with `.tf` files. Create this structure:
 
-```bash
-terraform show                                    # Full state in human-readable format
-terraform state list                              # All resources tracked by Terraform
-terraform state show aws_instance.<name>          # Every attribute of the instance
-terraform state show aws_vpc.<name>               # Every attribute of the VPC
+```
+terraform-modules/
+  main.tf                    # Root module -- calls child modules
+  variables.tf               # Root variables
+  outputs.tf                 # Root outputs
+  providers.tf               # Provider config
+  modules/
+    ec2-instance/
+      main.tf                # EC2 resource definition
+      variables.tf           # Module inputs
+      outputs.tf             # Module outputs
+    security-group/
+      main.tf                # Security group resource definition
+      variables.tf           # Module inputs
+      outputs.tf             # Module outputs
 ```
 
-Answer:
-1. How many resources does Terraform track?
-2. What attributes does the state store for an EC2 instance? (hint: way more than what you defined)
-3. Open `terraform.tfstate` in an editor -- find the `serial` number. What does it represent?
+Create all the directories and empty files. This is the standard layout every Terraform project follows.
+
+**Document:** What is the difference between a "root module" and a "child module"?
 
 ---
 
-### Task 2: Set Up S3 Remote Backend
-Storing state locally is dangerous -- one deleted file and you lose everything. Time to move it to S3.
+### Task 2: Build a Custom EC2 Module
+Create `modules/ec2-instance/`:
 
-1. First, create the backend infrastructure (do this manually or in a separate Terraform config):
-```bash
-# Create S3 bucket for state storage
-aws s3api create-bucket \
-  --bucket terraweek-state-<yourname> \
-  --region ap-south-1 \
-  --create-bucket-configuration LocationConstraint=ap-south-1
+1. **`variables.tf`** -- define inputs:
+   - `ami_id` (string)
+   - `instance_type` (string, default: `"t2.micro"`)
+   - `subnet_id` (string)
+   - `security_group_ids` (list of strings)
+   - `instance_name` (string)
+   - `tags` (map of strings, default: `{}`)
 
-# Enable versioning (so you can recover previous state)
-aws s3api put-bucket-versioning \
-  --bucket terraweek-state-<yourname> \
-  --versioning-configuration Status=Enabled
+2. **`main.tf`** -- define the resource:
+   - `aws_instance` using all the variables
+   - Merge the Name tag with additional tags
 
-# Create DynamoDB table for state locking
-aws dynamodb create-table \
-  --table-name terraweek-state-lock \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region ap-south-1
-```
+3. **`outputs.tf`** -- expose:
+   - `instance_id`
+   - `public_ip`
+   - `private_ip`
 
-2. Add the backend block to your Terraform config:
+Do NOT apply yet -- just write the module.
+
+---
+
+### Task 3: Build a Custom Security Group Module
+Create `modules/security-group/`:
+
+1. **`variables.tf`** -- define inputs:
+   - `vpc_id` (string)
+   - `sg_name` (string)
+   - `ingress_ports` (list of numbers, default: `[22, 80]`)
+   - `tags` (map of strings, default: `{}`)
+
+2. **`main.tf`** -- define the resource:
+   - `aws_security_group` in the given VPC
+   - Use `dynamic "ingress"` block to create rules from the `ingress_ports` list
+   - Allow all egress
+
+3. **`outputs.tf`** -- expose:
+   - `sg_id`
+
+This is your first time using a `dynamic` block -- it loops over a list to generate repeated nested blocks.
+
+---
+
+### Task 4: Call Your Modules from Root
+In the root `main.tf`, wire everything together:
+
+1. Create a VPC and subnet directly (or reuse your Day 62 config)
+2. Call the security group module:
 ```hcl
-terraform {
-  backend "s3" {
-    bucket         = "terraweek-state-<yourname>"
-    key            = "dev/terraform.tfstate"
-    region         = "ap-south-1"
-    dynamodb_table = "terraweek-state-lock"
-    encrypt        = true
-  }
+module "web_sg" {
+  source        = "./modules/security-group"
+  vpc_id        = aws_vpc.main.id
+  sg_name       = "terraweek-web-sg"
+  ingress_ports = [22, 80, 443]
+  tags          = local.common_tags
 }
 ```
 
-3. Run:
-```bash
-terraform init
+3. Call the EC2 module -- deploy **two instances** with different names using the same module:
+```hcl
+module "web_server" {
+  source             = "./modules/ec2-instance"
+  ami_id             = data.aws_ami.amazon_linux.id
+  instance_type      = "t2.micro"
+  subnet_id          = aws_subnet.public.id
+  security_group_ids = [module.web_sg.sg_id]
+  instance_name      = "terraweek-web"
+  tags               = local.common_tags
+}
+
+module "api_server" {
+  source             = "./modules/ec2-instance"
+  ami_id             = data.aws_ami.amazon_linux.id
+  instance_type      = "t2.micro"
+  subnet_id          = aws_subnet.public.id
+  security_group_ids = [module.web_sg.sg_id]
+  instance_name      = "terraweek-api"
+  tags               = local.common_tags
+}
 ```
-Terraform will ask: "Do you want to copy existing state to the new backend?" -- say yes.
 
-4. Verify:
-   - Check the S3 bucket -- you should see `dev/terraform.tfstate`
-   - Your local `terraform.tfstate` should now be empty or gone
-   - Run `terraform plan` -- it should show no changes (state migrated correctly)
+4. Add root outputs that reference module outputs:
+```hcl
+output "web_server_ip" {
+  value = module.web_server.public_ip
+}
 
----
+output "api_server_ip" {
+  value = module.api_server.public_ip
+}
+```
 
-### Task 3: Test State Locking
-State locking prevents two people from running `terraform apply` at the same time and corrupting the state.
-
-1. Open **two terminals** in the same project directory
-2. In Terminal 1, run:
+5. Apply:
 ```bash
+terraform init    # Downloads/links the local modules
+terraform plan    # Should show all resources from both module calls
 terraform apply
 ```
-3. While Terminal 1 is waiting for confirmation, in Terminal 2 run:
-```bash
-terraform plan
-```
-4. Terminal 2 should show a **lock error** with a Lock ID
 
-**Document:** What is the error message? Why is locking critical for team environments?
-
-5. After the test, if you get stuck with a stale lock:
-```bash
-terraform force-unlock <LOCK_ID>
-```
+**Verify:** Two EC2 instances running, same security group, different names. Check the AWS console.
 
 ---
 
-### Task 4: Import an Existing Resource
-Not everything starts with Terraform. Sometimes resources already exist in AWS and you need to bring them under Terraform management.
+### Task 5: Use a Public Registry Module
+Instead of building your own VPC from scratch, use the official module from the Terraform Registry.
 
-1. Manually create an S3 bucket in the AWS console -- name it `terraweek-import-test-<yourname>`
-2. Write a `resource "aws_s3_bucket"` block in your config for this bucket (just the bucket name, nothing else)
-3. Import it:
-```bash
-terraform import aws_s3_bucket.imported terraweek-import-test-<yourname>
-```
-4. Run `terraform plan`:
-   - If you see "No changes" -- the import was perfect
-   - If you see changes -- your config does not match reality. Update your config to match, then plan again until you get "No changes"
+1. Replace your hand-written VPC resources with:
+```hcl
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
 
-5. Run `terraform state list` -- the imported bucket should now appear alongside your other resources
+  name = "terraweek-vpc"
+  cidr = "10.0.0.0/16"
 
-**Document:** What is the difference between `terraform import` and creating a resource from scratch?
+  azs             = ["ap-south-1a", "ap-south-1b"]
+  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnets = ["10.0.3.0/24", "10.0.4.0/24"]
 
----
+  enable_nat_gateway = false
+  enable_dns_hostnames = true
 
-### Task 5: State Surgery -- mv and rm
-Sometimes you need to rename a resource or remove it from state without destroying it in AWS.
-
-1. **Rename a resource in state:**
-```bash
-terraform state list                              # Note the current resource names
-terraform state mv aws_s3_bucket.imported aws_s3_bucket.logs_bucket
-```
-Update your `.tf` file to match the new name. Run `terraform plan` -- it should show no changes.
-
-2. **Remove a resource from state (without destroying it):**
-```bash
-terraform state rm aws_s3_bucket.logs_bucket
-```
-Run `terraform plan` -- Terraform no longer knows about the bucket, but it still exists in AWS.
-
-3. **Re-import it** to bring it back:
-```bash
-terraform import aws_s3_bucket.logs_bucket terraweek-import-test-<yourname>
+  tags = local.common_tags
+}
 ```
 
-**Document:** When would you use `state mv` in a real project? When would you use `state rm`?
+2. Update your EC2 and SG module calls to reference `module.vpc.vpc_id` and `module.vpc.public_subnets[0]`
 
----
-
-### Task 6: Simulate and Fix State Drift
-State drift happens when someone changes infrastructure outside of Terraform -- through the AWS console, CLI, or another tool.
-
-1. Apply your full config so everything is in sync
-2. Go to the **AWS console** and manually:
-   - Change the Name tag of your EC2 instance to `"ManuallyChanged"`
-   - Change the instance type if it's stopped (or add a new tag)
 3. Run:
 ```bash
+terraform init     # Downloads the registry module
 terraform plan
+terraform apply
 ```
-You should see a **diff** -- Terraform detects that reality no longer matches the desired state.
 
-4. You have two choices:
-   - **Option A:** Run `terraform apply` to force reality back to match your config (reconcile)
-   - **Option B:** Update your `.tf` files to match the manual change (accept the drift)
+4. Compare: how many resources did the VPC module create vs your hand-written VPC from Day 62?
 
-5. Choose Option A -- apply and verify the tags are restored.
+**Document:** Where does Terraform download registry modules to? Check `.terraform/modules/`.
 
-6. Run `terraform plan` again -- it should show "No changes." Drift resolved.
+---
 
-**Document:** How do teams prevent state drift in production? (hint: restrict console access, use CI/CD for all changes)
+### Task 6: Module Versioning and Best Practices
+1. Pin your registry module version explicitly:
+   - `version = "5.1.0"` -- exact version
+   - `version = "~> 5.0"` -- any 5.x version
+   - `version = ">= 5.0, < 6.0"` -- range
+
+2. Run `terraform init -upgrade` to check for newer versions
+
+3. Check the state to see how modules appear:
+```bash
+terraform state list
+```
+Notice the `module.vpc.`, `module.web_server.`, `module.web_sg.` prefixes.
+
+4. Destroy everything:
+```bash
+terraform destroy
+```
+
+**Document:** Write down five module best practices:
+- Always pin versions for registry modules
+- Keep modules focused -- one concern per module
+- Use variables for everything, hardcode nothing
+- Always define outputs so callers can reference resources
+- Add a README.md to every custom module
 
 ---
 
 ## Hints
-- S3 bucket names must be globally unique
-- DynamoDB table must have a `LockID` string key -- this is what Terraform uses for locking
-- `terraform init -migrate-state` explicitly triggers state migration
-- `terraform refresh` (or `terraform apply -refresh-only`) updates state to match real infrastructure without making changes
-- State locking only works with backends that support it (S3+DynamoDB, Consul, Terraform Cloud)
-- `terraform force-unlock` should only be used when you are sure no other operation is running
-- Always version your S3 bucket so you can recover a previous state file if something goes wrong
+- `terraform init` must be re-run after adding a new module source
+- Module outputs are accessed as `module.<name>.<output>`
+- `dynamic` blocks use `content {}` inside to define the repeated block
+- Registry modules document all inputs and outputs on registry.terraform.io
+- Local modules use `source = "./modules/<name>"`, registry modules use `source = "<org>/<name>/<provider>"`
+- `terraform get` downloads modules without full init
 
 ---
 
 ## Documentation
-Create `day-64-state-management.md` with:
-- Diagram: local state vs remote state setup
-- Screenshot of state file in S3 bucket
-- Screenshot of the lock error from Task 3
-- Steps you followed for `terraform import` and the result
-- Explanation of state drift with your real example
-- When to use: `state mv`, `state rm`, `import`, `force-unlock`, `refresh`
+Create `day-65-modules.md` with:
+- Your custom module structure (directory tree)
+- The `variables.tf`, `main.tf`, and `outputs.tf` for your EC2 module
+- Root `main.tf` showing how you call both custom and registry modules
+- Screenshot of both EC2 instances running from the same module
+- Comparison: hand-written VPC vs registry VPC module (resources created)
+- Five module best practices in your own words
 
 ---
 
 ## Submission
-1. Add `day-64-state-management.md` to `2026/day-64/`
+1. Add `day-65-modules.md` to `2026/day-65/`
 2. Commit and push to your fork
 
 ---
 
 ## Learn in Public
-Share on LinkedIn: "Mastered Terraform state today -- migrated to S3 remote backend with DynamoDB locking, imported existing AWS resources, performed state surgery, and simulated drift. State management is the foundation of reliable infrastructure as code."
+Share on LinkedIn: "Built my first custom Terraform modules today -- EC2 and security group modules called multiple times with different configs. Then replaced 50 lines of VPC code with one registry module. Modules are the key to scalable infrastructure as code."
 
 `#90DaysOfDevOps` `#TerraWeek` `#DevOpsKaJosh` `#TrainWithShubham`
 
